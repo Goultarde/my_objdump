@@ -133,7 +133,7 @@ void read_elf32(FILE *file, bool is_magic, bool is_sections, bool is_disas, bool
         printf("---------------------------------------------------------------\n");
 
         for (int i = 0; i < ehdr.e_shnum; i++) {
-            printf("%-4d %-20s 0x%-8x 0x%-8x %-10s\n",
+            printf("%-4d %-20s 0x%08x 0x%-8x %-10s\n",
                 i,
                 &sh_str[sh_table[i].sh_name],
                 sh_table[i].sh_offset,
@@ -209,7 +209,7 @@ void read_elf64(FILE *file, bool is_magic, bool is_sections, bool is_disas, bool
         printf("---------------------------------------------------------------------\n");
 
         for (int i = 0; i < ehdr.e_shnum; i++) {
-            printf("%-4d %-20s 0x%010lx 0x%010lx %-10s\n",
+            printf("%-4d %-20s 0x%010lx 0x%-10lx %-10s\n",
                 i,
                 &sh_str[sh_table[i].sh_name],
                 sh_table[i].sh_offset,
