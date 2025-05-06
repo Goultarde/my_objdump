@@ -39,6 +39,27 @@ const char *get_section_type_name(uint32_t type) {
     }
 }
 
+void print_program_headers32(FILE *file, Elf32_Ehdr *ehdr) {
+    fseek(file, ehdr->e_phoff, SEEK_SET);
+    printf("\nProgram Headers (32-bit):\n");
+    for (int i = 0; i < ehdr->e_phnum; ++i) {
+        Elf32_Phdr ph;
+        fread(&ph, 1, sizeof(ph), file);
+        printf("[%d] Offset: 0x%x, VAddr: 0x%x, PAddr: 0x%x, FileSz: 0x%x, MemSz: 0x%x, Flags: 0x%x\n",
+               i, ph.p_offset, ph.p_vaddr, ph.p_paddr, ph.p_filesz, ph.p_memsz, ph.p_flags);
+    }
+}
+
+void print_program_headers64(FILE *file, Elf64_Ehdr *ehdr) {
+    fseek(file, ehdr->e_phoff, SEEK_SET);
+    printf("\nProgram Headers (64-bit):\n");
+    for (int i = 0; i < ehdr->e_phnum; ++i) {
+        Elf64_Phdr ph;
+        fread(&ph, 1, sizeof(ph), file);
+        printf("[%d] Offset: 0x%lx, VAddr: 0x%lx, PAddr: 0x%lx, FileSz: 0x%lx, MemSz: 0x%lx, Flags: 0x%x\n",
+               i, ph.p_offset, ph.p_vaddr, ph.p_paddr, ph.p_filesz, ph.p_memsz, ph.p_flags);
+    }
+}
 void disassemble_text_section32(FILE *file, Elf32_Shdr *text, const char *section_name) {
     printf("\nDesassemblage de la section: %s\n", section_name);
     unsigned char *code = malloc(text->sh_size);
@@ -71,7 +92,7 @@ void disassemble_text_section(FILE *file, Elf64_Shdr *text, const char *section_
     free(code);
 }
 
-void read_elf32(FILE *file, bool is_magic, bool is_sections, bool is_disas) {
+void read_elf32(FILE *file, bool is_magic, bool is_sections, bool is_disas, bool is_program_headers) {
     Elf32_Ehdr ehdr;
     fread(&ehdr, 1, sizeof(ehdr), file);
 
@@ -79,7 +100,7 @@ void read_elf32(FILE *file, bool is_magic, bool is_sections, bool is_disas) {
         print_magic(ehdr.e_ident);
     }
 
-    if (!is_sections && !is_disas) return;
+    if (!is_sections && !is_disas && !is_program_headers) return;
 
     if (ehdr.e_shnum == 0) {
         fseek(file, ehdr.e_shoff, SEEK_SET);
@@ -120,11 +141,15 @@ void read_elf32(FILE *file, bool is_magic, bool is_sections, bool is_disas) {
         disassemble_text_section32(file, text_section, ".text");
     }
 
+    if (is_program_headers) {
+        print_program_headers32(file, &ehdr);
+    }
+
     free(sh_table);
     free(sh_str);
 }
 
-void read_elf64(FILE *file, bool is_magic, bool is_sections, bool is_disas) {
+void read_elf64(FILE *file, bool is_magic, bool is_sections, bool is_disas, bool is_program_headers) {
     Elf64_Ehdr ehdr;
     fread(&ehdr, 1, sizeof(ehdr), file);
 
@@ -132,7 +157,7 @@ void read_elf64(FILE *file, bool is_magic, bool is_sections, bool is_disas) {
         print_magic(ehdr.e_ident);
     }
 
-    if (!is_sections && !is_disas) return;
+    if (!is_sections && !is_disas && !is_program_headers) return;
 
     if (ehdr.e_shnum == 0) {
         fseek(file, ehdr.e_shoff, SEEK_SET);
@@ -173,6 +198,10 @@ void read_elf64(FILE *file, bool is_magic, bool is_sections, bool is_disas) {
         disassemble_text_section(file, text_section, ".text");
     }
 
+    if (is_program_headers) {
+        print_program_headers64(file, &ehdr);
+    }
+
     free(sh_table);
     free(sh_str);
 }
@@ -181,10 +210,11 @@ int main(int argc, char **argv) {
     if (argc < 2) {
         fprintf(stderr, "Usage: %s [options] <fichier ELF>\n", argv[0]);
         fprintf(stderr, "Options :\n");
-        fprintf(stderr, "  -h         Afficher tout\n");
-        fprintf(stderr, "  -m, --magic    Magic ELF\n");
-        fprintf(stderr, "  -s         Sections\n");
-        fprintf(stderr, "  -d, --disas   Désassembler .text\n");
+        fprintf(stderr, "  -h             Afficher tout\n");
+        fprintf(stderr, "  -m, --magic    Afficher le magic ELF\n");
+        fprintf(stderr, "  -s             Afficher les sections\n");
+        fprintf(stderr, "  -d, --disas    Désassembler .text\n");
+        fprintf(stderr, "  -p             Afficher la Program Header Table\n");
         return 1;
     }
 
@@ -192,6 +222,7 @@ int main(int argc, char **argv) {
     bool is_sections = false;
     bool is_all = false;
     bool is_disas = false;
+    bool is_program_headers = false;
 
     const char *filename = NULL;
 
@@ -204,6 +235,8 @@ int main(int argc, char **argv) {
             is_sections = true;
         } else if (strcmp(argv[i], "-d") == 0 || strcmp(argv[i], "--disas") == 0) {
             is_disas = true;
+        } else if (strcmp(argv[i], "-p") == 0) {
+            is_program_headers = true;
         } else if (argv[i][0] != '-') {
             filename = argv[i];
         } else {
@@ -237,9 +270,9 @@ int main(int argc, char **argv) {
     }
 
     if (e_ident[EI_CLASS] == ELFCLASS32) {
-        read_elf32(file, is_all || is_magic, is_all || is_sections, is_all || is_disas);
+        read_elf32(file, is_all || is_magic, is_all || is_sections, is_all || is_disas, is_all || is_program_headers);
     } else if (e_ident[EI_CLASS] == ELFCLASS64) {
-        read_elf64(file, is_all || is_magic, is_all || is_sections, is_all || is_disas);
+        read_elf64(file, is_all || is_magic, is_all || is_sections, is_all || is_disas, is_all || is_program_headers);
     } else {
         fprintf(stderr, "Format ELF inconnu ou non supporté\n");
     }
@@ -247,5 +280,4 @@ int main(int argc, char **argv) {
     fclose(file);
     return 0;
 }
-
 
