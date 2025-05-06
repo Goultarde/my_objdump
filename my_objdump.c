@@ -59,8 +59,9 @@ void print_program_headers64(FILE *file, Elf64_Ehdr *ehdr) {
         printf("[%d] Offset: 0x%lx, VAddr: 0x%lx, PAddr: 0x%lx, FileSz: 0x%lx, MemSz: 0x%lx, Flags: 0x%x\n",
                i, ph.p_offset, ph.p_vaddr, ph.p_paddr, ph.p_filesz, ph.p_memsz, ph.p_flags);
     }
-}
-void disassemble_text_section32(FILE *file, Elf32_Shdr *text, const char *section_name) {
+
+
+}void disassemble_text_section32(FILE *file, Elf32_Shdr *text, const char *section_name) {
     printf("\nDesassemblage de la section: %s\n", section_name);
     unsigned char *code = malloc(text->sh_size);
     fseek(file, text->sh_offset, SEEK_SET);
@@ -243,6 +244,7 @@ void read_elf64(FILE *file, bool is_magic, bool is_sections, bool is_disas, bool
     free(sh_table);
     free(sh_str);
 }
+
 
 int main(int argc, char **argv) {
     if (argc < 2) {

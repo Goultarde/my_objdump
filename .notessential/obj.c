@@ -1,4 +1,3 @@
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -41,36 +40,21 @@ const char *get_section_type_name(uint32_t type) {
     }
 }
 
-void print_program_headers32(FILE *file, Elf32_Ehdr *ehdr) {
-    fseek(file, ehdr->e_phoff, SEEK_SET);
-    printf("\nProgram Headers (32-bit):\n");
-    for (int i = 0; i < ehdr->e_phnum; ++i) {
-        Elf32_Phdr ph;
-        fread(&ph, 1, sizeof(ph), file);
-        printf("[%d] Offset: 0x%x, VAddr: 0x%x, PAddr: 0x%x, FileSz: 0x%x, MemSz: 0x%x, Flags: 0x%x\n",
-               i, ph.p_offset, ph.p_vaddr, ph.p_paddr, ph.p_filesz, ph.p_memsz, ph.p_flags);
-    }
-}
 
-void print_program_headers64(FILE *file, Elf64_Ehdr *ehdr) {
-    fseek(file, ehdr->e_phoff, SEEK_SET);
-    printf("\nProgram Headers (64-bit):\n");
-    for (int i = 0; i < ehdr->e_phnum; ++i) {
-        Elf64_Phdr ph;
-        fread(&ph, 1, sizeof(ph), file);
-        printf("[%d] Offset: 0x%lx, VAddr: 0x%lx, PAddr: 0x%lx, FileSz: 0x%lx, MemSz: 0x%lx, Flags: 0x%x\n",
-               i, ph.p_offset, ph.p_vaddr, ph.p_paddr, ph.p_filesz, ph.p_memsz, ph.p_flags);
-    }
-}
-
-
+// Structures pour symboles
 typedef struct {
     uint64_t addr;
     const char *name;
-} FuncSymbol;
+} FuncSymbol64;
 
-FuncSymbol *load_function_symbols64(FILE *file, Elf64_Shdr *sh_table, int shnum, int *func_count_out, char **strtab_base) {
-    FuncSymbol *funcs = NULL;
+typedef struct {
+    uint32_t addr;
+    const char *name;
+} FuncSymbol32;
+
+// === CHARGEMENT DES SYMBOLES ===
+FuncSymbol64 *load_function_symbols64(FILE *file, Elf64_Shdr *sh_table, int shnum, const char *sh_str, int *func_count_out, char **strtab_base) {
+    FuncSymbol64 *funcs = NULL;
     *func_count_out = 0;
     *strtab_base = NULL;
 
@@ -89,7 +73,7 @@ FuncSymbol *load_function_symbols64(FILE *file, Elf64_Shdr *sh_table, int shnum,
             fread(strtab_data, 1, strtab.sh_size, file);
             *strtab_base = strtab_data;
 
-            funcs = malloc(sizeof(FuncSymbol) * sym_count);
+            funcs = malloc(sizeof(FuncSymbol64) * sym_count);
             for (int j = 0; j < sym_count; ++j) {
                 if (ELF64_ST_TYPE(symbols[j].st_info) == STT_FUNC && symbols[j].st_size > 0) {
                     funcs[*func_count_out].addr = symbols[j].st_value;
@@ -104,8 +88,8 @@ FuncSymbol *load_function_symbols64(FILE *file, Elf64_Shdr *sh_table, int shnum,
     return funcs;
 }
 
-FuncSymbol *load_function_symbols32(FILE *file, Elf32_Shdr *sh_table, int shnum, int *func_count_out, char **strtab_base) {
-    FuncSymbol *funcs = NULL;
+FuncSymbol32 *load_function_symbols32(FILE *file, Elf32_Shdr *sh_table, int shnum, const char *sh_str, int *func_count_out, char **strtab_base) {
+    FuncSymbol32 *funcs = NULL;
     *func_count_out = 0;
     *strtab_base = NULL;
 
@@ -124,7 +108,7 @@ FuncSymbol *load_function_symbols32(FILE *file, Elf32_Shdr *sh_table, int shnum,
             fread(strtab_data, 1, strtab.sh_size, file);
             *strtab_base = strtab_data;
 
-            funcs = malloc(sizeof(FuncSymbol) * sym_count);
+            funcs = malloc(sizeof(FuncSymbol32) * sym_count);
             for (int j = 0; j < sym_count; ++j) {
                 if (ELF32_ST_TYPE(symbols[j].st_info) == STT_FUNC && symbols[j].st_size > 0) {
                     funcs[*func_count_out].addr = symbols[j].st_value;
@@ -139,7 +123,8 @@ FuncSymbol *load_function_symbols32(FILE *file, Elf32_Shdr *sh_table, int shnum,
     return funcs;
 }
 
-void disassemble_text_section64(FILE *file, Elf64_Shdr *text, const char *section_name, FuncSymbol *funcs, int func_count) {
+// === DESASSEMBLAGE ===
+void disassemble_text_section64(FILE *file, Elf64_Shdr *text, const char *section_name, FuncSymbol64 *funcs, int func_count) {
     printf("\nDisassembly of section %s:\n", section_name);
     unsigned char *code = malloc(text->sh_size);
     fseek(file, text->sh_offset, SEEK_SET);
@@ -178,7 +163,7 @@ void disassemble_text_section64(FILE *file, Elf64_Shdr *text, const char *sectio
     free(code);
 }
 
-void disassemble_text_section32(FILE *file, Elf32_Shdr *text, const char *section_name, FuncSymbol *funcs, int func_count) {
+void disassemble_text_section32(FILE *file, Elf32_Shdr *text, const char *section_name, FuncSymbol32 *funcs, int func_count) {
     printf("\nDisassembly of section %s:\n", section_name);
     unsigned char *code = malloc(text->sh_size);
     fseek(file, text->sh_offset, SEEK_SET);
@@ -199,7 +184,7 @@ void disassemble_text_section32(FILE *file, Elf32_Shdr *text, const char *sectio
         for (size_t i = 0; i < count; i++) {
             for (int j = 0; j < func_count; j++) {
                 if (insn[i].address == funcs[j].addr) {
-                    printf("\n%08x <%s>:\n", (unsigned int)insn[i].address, funcs[j].name);
+                    printf("\n%08x <%s>:\n", funcs[j].addr, funcs[j].name);
                     break;
                 }
             }
@@ -216,20 +201,21 @@ void disassemble_text_section32(FILE *file, Elf32_Shdr *text, const char *sectio
     cs_close(&handle);
     free(code);
 }
-void read_elf32(FILE *file, bool is_magic, bool is_sections, bool is_disas, bool is_program_headers){
+
+
+void read_elf32(FILE *file, bool is_magic, bool is_sections, bool is_disas) {
     Elf32_Ehdr ehdr;
     fread(&ehdr, 1, sizeof(ehdr), file);
 
     if (is_magic) print_magic(ehdr.e_ident);
-    if (!is_sections && !is_disas && !is_program_headers) return;
+    if (!is_sections && !is_disas) return;
 
     if (ehdr.e_shnum == 0) {
         fseek(file, ehdr.e_shoff, SEEK_SET);
-        Elf64_Shdr first;
+        Elf32_Shdr first;
         fread(&first, 1, sizeof(first), file);
         ehdr.e_shnum = first.sh_size;
     }
-
 
     Elf32_Shdr *sh_table = malloc(sizeof(Elf32_Shdr) * ehdr.e_shnum);
     fseek(file, ehdr.e_shoff, SEEK_SET);
@@ -239,11 +225,6 @@ void read_elf32(FILE *file, bool is_magic, bool is_sections, bool is_disas, bool
     char *sh_str = malloc(sh_strtab.sh_size);
     fseek(file, sh_strtab.sh_offset, SEEK_SET);
     fread(sh_str, 1, sh_strtab.sh_size, file);
-
-    FuncSymbol *funcs = NULL;
-    int func_count = 0;
-    char *strtab = NULL;
-    funcs = load_function_symbols32(file, sh_table, ehdr.e_shnum, &func_count, &strtab);
 
     Elf32_Shdr *text_section = NULL;
     for (int i = 0; i < ehdr.e_shnum; i++) {
@@ -255,55 +236,28 @@ void read_elf32(FILE *file, bool is_magic, bool is_sections, bool is_disas, bool
     if (is_sections) {
         printf("Format : ELF 32 bits\n");
         printf("Nombre de sections : %d\n\n", ehdr.e_shnum);
-
-        printf("%-4s %-20s %-10s %-10s %-10s\n", "ID", "Nom", "Offset", "Taille", "Type");
-        printf("---------------------------------------------------------------\n");
-
         for (int i = 0; i < ehdr.e_shnum; i++) {
-            printf("%-4d %-20s 0x%08x 0x%-8x %-10s\n",
-                i,
-                &sh_str[sh_table[i].sh_name],
-                sh_table[i].sh_offset,
-                sh_table[i].sh_size,
-                get_section_type_name(sh_table[i].sh_type));
+            printf("Section %2d: %s\n", i, &sh_str[sh_table[i].sh_name]);
+            printf("  Offset : 0x%x\n", sh_table[i].sh_offset);
+            printf("  Taille : 0x%x\n", sh_table[i].sh_size);
+            printf("  Type   : %s\n\n", get_section_type_name(sh_table[i].sh_type));
         }
-
-        printf("\n");
     }
-
-//   if (is_sections) {
-//       printf("Format : ELF 32 bits\n");
-//       printf("Nombre de sections : %d\n\n", ehdr.e_shnum);
-//       for (int i = 0; i < ehdr.e_shnum; i++) {
-//           printf("Section %2d: %s\n", i, &sh_str[sh_table[i].sh_name]);
-//           printf("  Offset : 0x%x\n", sh_table[i].sh_offset);
-//           printf("  Taille : 0x%x\n", sh_table[i].sh_size);
-//           printf("  Type   : %s\n\n", get_section_type_name(sh_table[i].sh_type));
-//       }
-//   }
 
     if (is_disas && text_section) {
-        disassemble_text_section32(file, text_section, ".text", funcs, func_count);
+        disassemble_text_section32(file, text_section, ".text");
     }
-
-    if (is_program_headers) {
-        print_program_headers32(file, &ehdr);
-    }
-
-
 
     free(sh_table);
     free(sh_str);
-    free(funcs);
-    free(strtab);
 }
 
-void read_elf64(FILE *file, bool is_magic, bool is_sections, bool is_disas, bool is_program_headers){
+void read_elf64(FILE *file, bool is_magic, bool is_sections, bool is_disas) {
     Elf64_Ehdr ehdr;
     fread(&ehdr, 1, sizeof(ehdr), file);
 
     if (is_magic) print_magic(ehdr.e_ident);
-    if (!is_sections && !is_disas && !is_program_headers) return;
+    if (!is_sections && !is_disas) return;
 
     if (ehdr.e_shnum == 0) {
         fseek(file, ehdr.e_shoff, SEEK_SET);
@@ -321,11 +275,6 @@ void read_elf64(FILE *file, bool is_magic, bool is_sections, bool is_disas, bool
     fseek(file, sh_strtab.sh_offset, SEEK_SET);
     fread(sh_str, 1, sh_strtab.sh_size, file);
 
-    FuncSymbol *funcs = NULL;
-    int func_count = 0;
-    char *strtab = NULL;
-    funcs = load_function_symbols64(file, sh_table, ehdr.e_shnum, &func_count, &strtab);
-
     Elf64_Shdr *text_section = NULL;
     for (int i = 0; i < ehdr.e_shnum; i++) {
         if (strcmp(&sh_str[sh_table[i].sh_name], ".text") == 0) {
@@ -336,48 +285,20 @@ void read_elf64(FILE *file, bool is_magic, bool is_sections, bool is_disas, bool
     if (is_sections) {
         printf("Format : ELF 64 bits\n");
         printf("Nombre de sections : %d\n\n", ehdr.e_shnum);
-
-        printf("%-4s %-20s %-12s %-12s %-10s\n", "ID", "Nom", "Offset", "Taille", "Type");
-        printf("---------------------------------------------------------------------\n");
-
         for (int i = 0; i < ehdr.e_shnum; i++) {
-            printf("%-4d %-20s 0x%010lx 0x%-10lx %-10s\n",
-                i,
-                &sh_str[sh_table[i].sh_name],
-                sh_table[i].sh_offset,
-                sh_table[i].sh_size,
-                get_section_type_name(sh_table[i].sh_type));
+            printf("Section %2d: %s\n", i, &sh_str[sh_table[i].sh_name]);
+            printf("  Offset : 0x%lx\n", sh_table[i].sh_offset);
+            printf("  Taille : 0x%lx\n", sh_table[i].sh_size);
+            printf("  Type   : %s\n\n", get_section_type_name(sh_table[i].sh_type));
         }
-
-        printf("\n");
     }
-
-
-//   if (is_sections) {
-//       printf("Format : ELF 64 bits\n");
-//       printf("Nombre de sections : %d\n\n", ehdr.e_shnum);
-//       for (int i = 0; i < ehdr.e_shnum; i++) {
-//           printf("Section %2d: %s\n", i, &sh_str[sh_table[i].sh_name]);
-//           printf("  Offset : 0x%lx\n", sh_table[i].sh_offset);
-//           printf("  Taille : 0x%lx\n", sh_table[i].sh_size);
-//           printf("  Type   : %s\n\n", get_section_type_name(sh_table[i].sh_type));
-//       }
-//   }
 
     if (is_disas && text_section) {
-        disassemble_text_section64(file, text_section, ".text", funcs, func_count);
+        disassemble_text_section64(file, text_section, ".text");
     }
-
-    if (is_program_headers) {
-        print_program_headers64(file, &ehdr);
-    }
-
-
 
     free(sh_table);
     free(sh_str);
-    free(funcs);
-    free(strtab);
 }
 
 int main(int argc, char **argv) {
@@ -385,10 +306,9 @@ int main(int argc, char **argv) {
         fprintf(stderr, "Usage: %s [options] <fichier ELF>\n", argv[0]);
         fprintf(stderr, "Options :\n");
         fprintf(stderr, "  -h             Afficher tout\n");
-        fprintf(stderr, "  -m, --magic    Afficher le magic ELF\n");
+        fprintf(stderr, "  -m, --magic    Afficher magic ELF\n");
         fprintf(stderr, "  -s             Afficher les sections\n");
         fprintf(stderr, "  -d, --disas    Désassembler .text\n");
-        fprintf(stderr, "  -p             Afficher la Program Header Table\n");
         return 1;
     }
 
@@ -396,8 +316,6 @@ int main(int argc, char **argv) {
     bool is_sections = false;
     bool is_all = false;
     bool is_disas = false;
-    bool is_program_headers = false;
-
     const char *filename = NULL;
 
     for (int i = 1; i < argc; i++) {
@@ -409,8 +327,6 @@ int main(int argc, char **argv) {
             is_sections = true;
         } else if (strcmp(argv[i], "-d") == 0 || strcmp(argv[i], "--disas") == 0) {
             is_disas = true;
-        } else if (strcmp(argv[i], "-p") == 0) {
-            is_program_headers = true;
         } else if (argv[i][0] != '-') {
             filename = argv[i];
         } else {
@@ -444,9 +360,9 @@ int main(int argc, char **argv) {
     }
 
     if (e_ident[EI_CLASS] == ELFCLASS32) {
-        read_elf32(file, is_all || is_magic, is_all || is_sections, is_all || is_disas, is_all || is_program_headers);
+        read_elf32(file, is_all || is_magic, is_all || is_sections, is_all || is_disas);
     } else if (e_ident[EI_CLASS] == ELFCLASS64) {
-        read_elf64(file, is_all || is_magic, is_all || is_sections, is_all || is_disas, is_all || is_program_headers);
+        read_elf64(file, is_all || is_magic, is_all || is_sections, is_all || is_disas);
     } else {
         fprintf(stderr, "Format ELF inconnu ou non supporté\n");
     }
@@ -454,3 +370,4 @@ int main(int argc, char **argv) {
     fclose(file);
     return 0;
 }
+
