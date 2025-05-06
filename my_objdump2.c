@@ -40,14 +40,31 @@ const char *get_section_type_name(uint32_t type) {
     }
 }
 
+const char *get_ph_type(uint32_t type) {
+    switch (type) {
+        case 0: return "NULL";
+        case 1: return "LOAD";
+        case 2: return "DYNAMIC";
+        case 3: return "INTERP";
+        case 4: return "NOTE";
+        case 6: return "PHDR";
+        case 0x6474e550: return "GNU_EH_FRAME";
+        case 0x6474e551: return "GNU_STACK";
+        case 0x6474e552: return "GNU_RELRO";
+        default: return "UNKNOWN";
+    }
+}
+
+
 void print_program_headers32(FILE *file, Elf32_Ehdr *ehdr) {
     fseek(file, ehdr->e_phoff, SEEK_SET);
     printf("\nProgram Headers (32-bit):\n");
     for (int i = 0; i < ehdr->e_phnum; ++i) {
         Elf32_Phdr ph;
         fread(&ph, 1, sizeof(ph), file);
-        printf("[%d] Offset: 0x%x, VAddr: 0x%x, PAddr: 0x%x, FileSz: 0x%x, MemSz: 0x%x, Flags: 0x%x\n",
-               i, ph.p_offset, ph.p_vaddr, ph.p_paddr, ph.p_filesz, ph.p_memsz, ph.p_flags);
+        printf("[%d] %-14s Offset: 0x%x, VAddr: 0x%x, PAddr: 0x%x, FileSz: 0x%x, MemSz: 0x%x, Flags: 0x%x\n",
+            i, get_ph_type(ph.p_type), ph.p_offset, ph.p_vaddr, ph.p_paddr, ph.p_filesz, ph.p_memsz, ph.p_flags);
+     
     }
 }
 
@@ -128,7 +145,7 @@ ElfSymbol *load_symbols32(FILE *file, Elf32_Shdr *sh_table, int shnum, int *symb
 
             symbols_out = malloc(sizeof(ElfSymbol) * sym_count);
             for (int j = 0; j < sym_count; ++j) {
-                if (symbols_buffer[j].st_size > 0 && symbols_buffer[j].st_value != 0) {  // ignore null symbols
+                if (symbols_buffer[j].st_size > 0 && symbols_buffer[j].st_value != 0) {
                     symbols_out[*symbol_count_out].addr = symbols_buffer[j].st_value;
                     symbols_out[*symbol_count_out].name = &strtab_data[symbols_buffer[j].st_name];
                     (*symbol_count_out)++;

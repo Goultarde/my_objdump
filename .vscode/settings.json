@@ -4,6 +4,7 @@
         "stdlib.h": "c",
         "type_traits": "c",
         "elf_minimal.h": "c",
-        "capstone.h": "c"
+        "capstone.h": "c",
+        "compare": "c"
     }
 }
