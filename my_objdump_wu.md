@@ -117,16 +117,29 @@ fread(sh_str, 1, sh_strtab.sh_size, file);
 
 Ainsi on peut venir récupérer le nom, la taille et l’offset de chaque sections.
 
-```csharp
-for (int i = 0; i < ehdr.e_shnum; i++) {
-            printf("Section %2d: %s\n", i, &sh_str[sh_table[i].sh_name]);
-            printf("  Offset : 0x%x\n", sh_table[i].sh_offset);
-            printf("  Taille : 0x%x\n", sh_table[i].sh_size);
-            printf("  Type   : %s\n\n", get_section_type_name(sh_table[i].sh_type));
-        }
+```c
+if (is_sections) {
+    printf("Format : ELF 32 bits\n");
+    printf("Nombre de sections : %d\n\n", ehdr.e_shnum);
+
+    printf("%-4s %-20s %-10s %-10s %-10s\n", "ID", "Nom", "Offset", "Taille", "Type");
+    printf("---------------------------------------------------------------\n");
+
+    for (int i = 0; i < ehdr.e_shnum; i++) {
+        printf("%-4d %-20s 0x%08x 0x%-8x %-10s\n",
+            i,
+            &sh_str[sh_table[i].sh_name],
+            sh_table[i].sh_offset,
+            sh_table[i].sh_size,
+            get_section_type_name(sh_table[i].sh_type));
+    }
+
+    printf("\n");
+}
+
 ```
 
-avec `&sh_str[sh_table[i].sh_name]);` je récupère la valeur à l’adresse, `sh_name` étant un index vers le premier caractère du nom d’une section. printf s’arrète d’afficher une chaîne de caractère `%s` lorsqu’elle atteint un caractère null horst `.shstrtab` se compose comme suit :
+avec `&sh_str[sh_table[i].sh_name]);` je récupère la valeur à l’adresse, `sh_name` étant un index vers le premier caractère du nom d’une section. `printf` s’arrête d’afficher une chaîne de caractère `%s` lorsqu’elle atteint un caractère null horst `.shstrtab` se compose comme suit :
 
 ```csharp
 0   → '\0'  
@@ -150,18 +163,168 @@ A partir de ces informations, on peut crée un buffer `sh_str`
 - `ehdr` est l’en-tête ELF principal.
 - Le champ `e_shstrndx` (section header string table index) contient un **index** : il indique **quelle section** contient les **noms de toutes les autres sections**.
 - C’est souvent la dernière section du fichier (ex: `.shstrtab`).
-
 ### Désassembler la section `.text`
 
-Un bonus était de désassembler la fonction **`.text`**, pour cela, on peut crée un variable `text_section` de type `Elf32_Shdr` qui contiendra donc le `header` de la Section `.text`
-
-Pour cela on va parcourir toute la table `sh_table` pour trouver la section `.text`
-
-```csharp
-Elf32_Shdr *text_section = NULL;
-for (int i = 0; i < ehdr.e_shnum; i++) {
-    if (strcmp(&sh_str[sh_table[i].sh_name], ".text") == 0) {
-        text_section = &sh_table[i];
+- **Récupération des symboles**
+    
+    Un bonus était de désassembler la fonction **`.text`**, pour cela, on peut crée un variable `text_section` de type `Elf32_Shdr` qui contiendra donc le `header` de la Section `.text`
+    
+    Pour cela on va parcourir toute la table `sh_table` pour trouver la section `.text`
+    
+    ```csharp
+    Elf32_Shdr *text_section = NULL;
+    for (int i = 0; i < ehdr.e_shnum; i++) {
+        if (strcmp(&sh_str[sh_table[i].sh_name], ".text") == 0) {
+            text_section = &sh_table[i];
+        }
     }
-}
+    ```
+    
+    Il nous faudra récupérer les symbole pour plus de lisibilité l’hors de l’assemblage, pour cela, on crée une structure pour stocker leurs adresse, nom et type  (bien que pour l’instant on utilise pas le type) . Cela n’est pas forcement utile, mais il est plus simbe de manipuler notre propre structure de symbole que la structure de symbole déjà existante dans l’`elf.h`.
+    
+    ```c
+    typedef struct {
+        uint64_t addr;
+        const char *name;
+        uint8_t type;
+    } ElfSymbol;
+    
+    ```
+    
+    Pour ne pas simplement avoir un affichage hexadécimal de la section `.text` Il va donc nous falloir trouver ces symboles de la section `.text` et récupéreur, leurs addresses, leur nom et leur nombre total.
+    
+    Pour cela, on va devoir lire la table des symbol qui est une section nommée `.symtab` qui contient la un tableau des symboles ayant tous cette structure :
+    
+    ```c
+    typedef struct {
+        Elf32_Word st_name;   // ← offset dans .strtab (vers le nom)
+        Elf32_Addr st_value;  // adresse du symbole (ex: 0x08048400)
+        Elf32_Word st_size;   // taille en octets
+        unsigned char st_info;// type (FUNC, OBJECT...) + binding
+        unsigned char st_other;
+        Elf32_Half st_shndx;  // index de la section associée
+    } Elf32_Sym;
+    ```
+    
+    Ainsi, avec une boucle for, on recherche dans la table des sections préalablement remplie avec ces dernières, la section `.symtab`, c’est celle qui auras pour type `SHT_SYMTAB`
+    
+    ```c
+    for (int i = 0; i < shnum; ++i) {
+            if (sh_table[i].sh_type == SHT_SYMTAB) {
+    ```
+    
+    de cette section on récupère sa taille et donc celle de tout les symboles combinées, pour la diviser par la taille d’un seul symbole, ce qui nous permet d’obtenir le nombre de symbole. On utilisera ce dernier pour savoir combien de symbole est ce qu’il faudra stocker dans notre variable `symbols_buffer` qui elle est un pointeur de type `Elf64_Sym *` . Ainsi on stocke tout les symboles dans ce `buffer`. 
+    
+    ```c
+    int sym_count = symbols_buffer.sh_size / sizeof(Elf64_Sym);
+    Elf64_Sym *symbols_buffer = malloc(symtab.sh_size);
+    fseek(file, symbols_buffer.sh_offset, SEEK_SET);
+    fread(symbols_buffer, sizeof(Elf64_Sym), sym_count, file);
+    ```
+    
+    Mais ce buffer ne va avoir que pour but de remplir nos propre symbole avec notre structure personnalyser que l’on va stocker dans la variable `symols_out` de notre type personalyser `ElfSymbol` cette fois si on ne stocke que l’addresse et le nom du symbole, c’est avec `symbol_count_out` que l’on va itérée sur chaque symbole.
+    
+    ```c
+    symbols_out = malloc(sizeof(ElfSymbol) * sym_count);
+    for (int j = 0; j < sym_count; ++j) {
+        if (symbols_buffer[j].st_size > 0 && symbols_buffer[j].st_value != 0) {  // ignore null symbols
+            symbols_out[*symbol_count_out].addr = symbols_buffer[j].st_value;
+            symbols_out[*symbol_count_out].name = &strtab_data[symbols_buffer[j].st_name];
+            (*symbol_count_out)++;
+        }
+    }
+    ```
+    
+- **Désassemblage de la section `.text` avec les symboles**
+    
+    Enfin on va pourvoir désassembler notre section `.text` mais pour cela, on auras besoin de la bibliothèque `capstone` préalablement importer `#include <capstone/capstone.h>`. 
+    
+    Cette bibliothèque va nous permettre de traduire le code présent dans la section `.text` en instructions assembleur.
+    
+    On va stocker tous le contenue de la section dans un pointeur `code` et s’assurer de placer notre curseur de fichier a l’offset au quel commence notre section. L’unsigned char nous permet de représenter un octet brut en C.
+    
+    ```c
+    unsigned char *code = malloc(text->sh_size);
+    fseek(file, text->sh_offset, SEEK_SET);
+    fread(code, 1, text->sh_size, file);
+    ```
+    
+    On va avoir besoin de déclarer un handle Capstone de type `csh`, qui est un type défini par capstone et qui sert de descripteur ou de session si on préfère et qui va permettre à capstone de savoir quelle architecture on veux (x86, ARM…), en quel mode (32-bit,64-bit,Thumb…). Ensuite on va déclarer un tableau `insn` pour les instructions désassemblées. Il sera de type `cs_insn *`, un type qui dans capstone qui permet de représenter une instruction désassemblée :
+    
+    ```c
+    typedef struct cs_insn {
+        uint64_t address;
+        char mnemonic[32];  // ex: "mov", "call"
+        char op_str[160];   // ex: "eax, 0x1" (operandes)
+        ...
+    } cs_insn;
+    
+    ```
+    
+    et enfin une variable `count` de type `size_t` qui est un type entier pouvant contenir la taille maximale d’un objet en mémoire. Il va nous permettre de comter le nombre d’instruction présente dans notre section.
+    
+    Tout d’abord on va passer notre `handle` dans `cs_open` qui va permettre d’initialiser la session de désassemblage puis nous allons calculer le nombre d’instructions  et par la même occasion remplire notre buffer d’instruction `insn` avec `cs_disasm`
+    
+    ```c
+    if (cs_open(CS_ARCH_X86, CS_MODE_32, &handle) != CS_ERR_OK) {
+        fprintf(stderr, "Failed to initialize Capstone\n");
+        return;
+    }
+    
+    count = cs_disasm(handle, code, text->sh_size, text->sh_addr, 0, &insn);
+    ```
+    
+    Ainsi pour chaque symbole on va venir afficher adresse de l’instruction, son `mnemonic` et ses opérande (`op_str`)
+    
+    Enfin on fermet notre `handle` avec `cs_close(&handle);`
+
+### Affichage de la programme Header table
+
+Enfin il nous faillais afficher les informations de la program header table.
+
+Un Program Header décrit comment charger le programme en mémoire à l’exécution, il est utilisé par le loader (ex: le noyau Linux), pas vraiment par les développeurs.
+
+La ou la programme Header table est obligatoirement présent et permet  de charger l’ELF en mémoire et est utiliser par le loader, la section Header Table elle est utiliser par.
+
+Pour afficher la programme Header on va simplement afficher chaque élément de la structure `Elf64_Phdr`. 
+
+Pour cela on récupère l’offset de la progamme Header dans la Section Header affin d’y placer notre curseur 
+
+```c
+fseek(file, ehdr->e_phoff, SEEK_SET);
+```
+
+Puis on ce contente de tout afficher sous forme de tableau :
+
+```c
+printf("\nProgram Headers (64-bit):\n");
+    printf("%-14s %-10s %-10s %-10s %-8s %-8s %-4s %-6s\n",
+           "Type", "Offset", "VirtAddr", "PhysAddr", "FileSz", "MemSz", "Flg", "Align");
+    printf("--------------------------------------------------------------------------------\n");
+
+    for (int i = 0; i < ehdr->e_phnum; ++i) {
+        Elf64_Phdr ph;
+        fread(&ph, 1, sizeof(ph), file);
+
+        printf("%-14s 0x%08lx 0x%08lx 0x%08lx 0x%06lx 0x%06lx %3c%c%c 0x%lx\n",
+               get_ph_type(ph.p_type),
+               ph.p_offset,
+               ph.p_vaddr,
+               ph.p_paddr,
+               ph.p_filesz,
+               ph.p_memsz,
+               (ph.p_flags & 4) ? 'R' : ' ',
+               (ph.p_flags & 2) ? 'W' : ' ',
+               (ph.p_flags & 1) ? 'X' : ' ',
+               ph.p_align);
+    }
+```
+
+Avec comme spécificiter le `RWX` qui va permettre d’indiqué les permission d’un segment ELF via le champ `p_flags` et pour trouver les permision d’un segments on va faire une opération bit à bit (`bitwise AND`) entre les valeurs individuel de `R`, `W` et `X` et la valeur du `p_flags` (converties en binaire).:
+
+```c
+  00000101   ← ph.p_flags
+& 00000100 ← 4
+-----------
+  00000100 → Résultat ≠ 0 ⇒ le bit est activé
 ```
