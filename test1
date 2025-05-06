@@ -1,0 +1,232 @@
+
+Disassembly of section .text:
+  08048400:	xor        ebp, ebp
+  08048402:	pop        esi
+  08048403:	mov        ecx, esp
+  08048405:	and        esp, 0xfffffff0
+  08048408:	push       eax
+  08048409:	push       esp
+  0804840a:	push       edx
+  0804840b:	call       0x8048433
+  08048410:	add        ebx, 0x1bf0
+  08048416:	lea        eax, [ebx - 0x19b0]
+  0804841c:	push       eax
+  0804841d:	lea        eax, [ebx - 0x1a10]
+  08048423:	push       eax
+  08048424:	push       ecx
+  08048425:	push       esi
+  08048426:	mov        eax, 0x8048584
+  0804842c:	push       eax
+  0804842d:	call       0x80483e0
+  08048432:	hlt        
+  08048433:	mov        ebx, dword ptr [esp]
+  08048436:	ret        
+  08048437:	nop        
+  08048439:	nop        
+  0804843b:	nop        
+  0804843d:	nop        
+  0804843f:	nop        
+
+08048440 <_dl_relocate_static_pie>:
+  08048440:	ret        
+  08048442:	nop        
+  08048444:	nop        
+  08048446:	nop        
+  08048448:	nop        
+  0804844a:	nop        
+  0804844c:	nop        
+  0804844e:	nop        
+
+08048450 <__x86.get_pc_thunk.bx>:
+  08048450:	mov        ebx, dword ptr [esp]
+  08048453:	ret        
+  08048454:	nop        
+  08048456:	nop        
+  08048458:	nop        
+  0804845a:	nop        
+  0804845c:	nop        
+  0804845e:	nop        
+  08048460:	mov        eax, 0x804a02c
+  08048465:	cmp        eax, 0x804a02c
+  0804846a:	je         0x8048490
+  0804846c:	mov        eax, 0
+  08048471:	test       eax, eax
+  08048473:	je         0x8048490
+  08048475:	push       ebp
+  08048476:	mov        ebp, esp
+  08048478:	sub        esp, 0x14
+  0804847b:	push       0x804a02c
+  08048480:	call       eax
+  08048482:	add        esp, 0x10
+  08048485:	leave      
+  08048486:	ret        
+  08048487:	mov        esi, esi
+  08048489:	lea        edi, [edi]
+  08048490:	ret        
+  08048492:	lea        esi, [esi]
+  08048499:	lea        edi, [edi]
+  080484a0:	mov        eax, 0x804a02c
+  080484a5:	sub        eax, 0x804a02c
+  080484aa:	sar        eax, 2
+  080484ad:	mov        edx, eax
+  080484af:	shr        edx, 0x1f
+  080484b2:	add        eax, edx
+  080484b4:	sar        eax, 1
+  080484b6:	je         0x80484d8
+  080484b8:	mov        edx, 0
+  080484bd:	test       edx, edx
+  080484bf:	je         0x80484d8
+  080484c1:	push       ebp
+  080484c2:	mov        ebp, esp
+  080484c4:	sub        esp, 0x10
+  080484c7:	push       eax
+  080484c8:	push       0x804a02c
+  080484cd:	call       edx
+  080484cf:	add        esp, 0x10
+  080484d2:	leave      
+  080484d3:	ret        
+  080484d4:	lea        esi, [esi]
+  080484d8:	ret        
+  080484da:	lea        esi, [esi]
+  080484e0:	cmp        byte ptr [0x804a02c], 0
+  080484e7:	jne        0x8048500
+  080484e9:	push       ebp
+  080484ea:	mov        ebp, esp
+  080484ec:	sub        esp, 8
+  080484ef:	call       0x8048460
+  080484f4:	mov        byte ptr [0x804a02c], 1
+  080484fb:	leave      
+  080484fc:	ret        
+  080484fd:	lea        esi, [esi]
+  08048500:	ret        
+  08048502:	lea        esi, [esi]
+  08048509:	lea        edi, [edi]
+  08048510:	push       ebp
+  08048511:	mov        ebp, esp
+  08048513:	pop        ebp
+  08048514:	jmp        0x80484a0
+
+08048516 <shell>:
+  08048516:	push       ebp
+  08048517:	mov        ebp, esp
+  08048519:	push       esi
+  0804851a:	push       ebx
+  0804851b:	call       0x8048450
+  08048520:	add        ebx, 0x1ae0
+  08048526:	call       0x80483a0
+  0804852b:	mov        esi, eax
+  0804852d:	call       0x80483a0
+  08048532:	sub        esp, 8
+  08048535:	push       esi
+  08048536:	push       eax
+  08048537:	call       0x80483d0
+  0804853c:	add        esp, 0x10
+  0804853f:	sub        esp, 0xc
+  08048542:	lea        eax, [ebx - 0x1990]
+  08048548:	push       eax
+  08048549:	call       0x80483c0
+  0804854e:	add        esp, 0x10
+  08048551:	nop        
+  08048552:	lea        esp, [ebp - 8]
+  08048555:	pop        ebx
+  08048556:	pop        esi
+  08048557:	pop        ebp
+  08048558:	ret        
+
+08048559 <sup>:
+  08048559:	push       ebp
+  0804855a:	mov        ebp, esp
+  0804855c:	push       ebx
+  0804855d:	sub        esp, 4
+  08048560:	call       0x80485de
+  08048565:	add        eax, 0x1a9b
+  0804856a:	sub        esp, 0xc
+  0804856d:	lea        edx, [eax - 0x1984]
+  08048573:	push       edx
+  08048574:	mov        ebx, eax
+  08048576:	call       0x80483b0
+  0804857b:	add        esp, 0x10
+  0804857e:	nop        
+  0804857f:	mov        ebx, dword ptr [ebp - 4]
+  08048582:	leave      
+  08048583:	ret        
+
+08048584 <main>:
+  08048584:	lea        ecx, [esp + 4]
+  08048588:	and        esp, 0xfffffff0
+  0804858b:	push       dword ptr [ecx - 4]
+  0804858e:	push       ebp
+  0804858f:	mov        ebp, esp
+  08048591:	push       ebx
+  08048592:	push       ecx
+  08048593:	sub        esp, 0x90
+  08048599:	call       0x80485de
+  0804859e:	add        eax, 0x1a62
+  080485a3:	lea        edx, [eax - 0x1aa7]
+  080485a9:	mov        dword ptr [ebp - 0xc], edx
+  080485ac:	mov        edx, dword ptr [eax - 4]
+  080485b2:	mov        edx, dword ptr [edx]
+  080485b4:	sub        esp, 4
+  080485b7:	push       edx
+  080485b8:	push       0x85
+  080485bd:	lea        edx, [ebp - 0x8c]
+  080485c3:	push       edx
+  080485c4:	mov        ebx, eax
+  080485c6:	call       0x8048390
+  080485cb:	add        esp, 0x10
+  080485ce:	mov        eax, dword ptr [ebp - 0xc]
+  080485d1:	call       eax
+  080485d3:	nop        
+  080485d4:	lea        esp, [ebp - 8]
+  080485d7:	pop        ecx
+  080485d8:	pop        ebx
+  080485d9:	pop        ebp
+  080485da:	lea        esp, [ecx - 4]
+  080485dd:	ret        
+  080485de:	mov        eax, dword ptr [esp]
+  080485e1:	ret        
+  080485e2:	nop        
+  080485e4:	nop        
+  080485e6:	nop        
+  080485e8:	nop        
+  080485ea:	nop        
+  080485ec:	nop        
+  080485ee:	nop        
+
+080485f0 <__libc_csu_init>:
+  080485f0:	push       ebp
+  080485f1:	push       edi
+  080485f2:	push       esi
+  080485f3:	push       ebx
+  080485f4:	call       0x8048450
+  080485f9:	add        ebx, 0x1a07
+  080485ff:	sub        esp, 0xc
+  08048602:	mov        ebp, dword ptr [esp + 0x28]
+  08048606:	lea        esi, [ebx - 0xf4]
+  0804860c:	call       0x8048350
+  08048611:	lea        eax, [ebx - 0xf8]
+  08048617:	sub        esi, eax
+  08048619:	sar        esi, 2
+  0804861c:	test       esi, esi
+  0804861e:	je         0x8048645
+  08048620:	xor        edi, edi
+  08048622:	lea        esi, [esi]
+  08048628:	sub        esp, 4
+  0804862b:	push       ebp
+  0804862c:	push       dword ptr [esp + 0x2c]
+  08048630:	push       dword ptr [esp + 0x2c]
+  08048634:	call       dword ptr [ebx + edi*4 - 0xf8]
+  0804863b:	add        edi, 1
+  0804863e:	add        esp, 0x10
+  08048641:	cmp        esi, edi
+  08048643:	jne        0x8048628
+  08048645:	add        esp, 0xc
+  08048648:	pop        ebx
+  08048649:	pop        esi
+  0804864a:	pop        edi
+  0804864b:	pop        ebp
+  0804864c:	ret        
+  0804864d:	lea        esi, [esi]
+
+08048650 <__libc_csu_fini>:
+  08048650:	ret        

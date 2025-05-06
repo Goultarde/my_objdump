@@ -2,6 +2,8 @@
     "files.associations": {
         "string.h": "c",
         "stdlib.h": "c",
-        "type_traits": "c"
+        "type_traits": "c",
+        "elf_minimal.h": "c",
+        "capstone.h": "c"
     }
 }
