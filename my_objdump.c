@@ -129,13 +129,33 @@ void read_elf32(FILE *file, bool is_magic, bool is_sections, bool is_disas, bool
         printf("Format : ELF 32 bits\n");
         printf("Nombre de sections : %d\n\n", ehdr.e_shnum);
 
+        printf("%-4s %-20s %-10s %-10s %-10s\n", "ID", "Nom", "Offset", "Taille", "Type");
+        printf("---------------------------------------------------------------\n");
+
         for (int i = 0; i < ehdr.e_shnum; i++) {
-            printf("Section %2d: %s\n", i, &sh_str[sh_table[i].sh_name]);
-            printf("  Offset : 0x%x\n", sh_table[i].sh_offset);
-            printf("  Taille : 0x%x\n", sh_table[i].sh_size);
-            printf("  Type   : %s\n\n", get_section_type_name(sh_table[i].sh_type));
+            printf("%-4d %-20s 0x%-8x 0x%-8x %-10s\n",
+                i,
+                &sh_str[sh_table[i].sh_name],
+                sh_table[i].sh_offset,
+                sh_table[i].sh_size,
+                get_section_type_name(sh_table[i].sh_type));
         }
+
+        printf("\n");
     }
+
+
+//  if (is_sections) {
+//      printf("Format : ELF 32 bits\n");
+//      printf("Nombre de sections : %d\n\n", ehdr.e_shnum);
+//
+//      for (int i = 0; i < ehdr.e_shnum; i++) {
+//          printf("Section %2d: %s\n", i, &sh_str[sh_table[i].sh_name]);
+//          printf("  Offset : 0x%x\n", sh_table[i].sh_offset);
+//          printf("  Taille : 0x%x\n", sh_table[i].sh_size);
+//          printf("  Type   : %s\n\n", get_section_type_name(sh_table[i].sh_type));
+//      }
+//  }
 
     if (is_disas && text_section) {
         disassemble_text_section32(file, text_section, ".text");
@@ -181,18 +201,36 @@ void read_elf64(FILE *file, bool is_magic, bool is_sections, bool is_disas, bool
             text_section = &sh_table[i];
         }
     }
-
     if (is_sections) {
         printf("Format : ELF 64 bits\n");
         printf("Nombre de sections : %d\n\n", ehdr.e_shnum);
 
+        printf("%-4s %-20s %-12s %-12s %-10s\n", "ID", "Nom", "Offset", "Taille", "Type");
+        printf("---------------------------------------------------------------------\n");
+
         for (int i = 0; i < ehdr.e_shnum; i++) {
-            printf("Section %2d: %s\n", i, &sh_str[sh_table[i].sh_name]);
-            printf("  Offset : 0x%lx\n", sh_table[i].sh_offset);
-            printf("  Taille : 0x%lx\n", sh_table[i].sh_size);
-            printf("  Type   : %s\n\n", get_section_type_name(sh_table[i].sh_type));
+            printf("%-4d %-20s 0x%010lx 0x%010lx %-10s\n",
+                i,
+                &sh_str[sh_table[i].sh_name],
+                sh_table[i].sh_offset,
+                sh_table[i].sh_size,
+                get_section_type_name(sh_table[i].sh_type));
         }
+
+        printf("\n");
     }
+
+//   if (is_sections) {
+//       printf("Format : ELF 64 bits\n");
+//       printf("Nombre de sections : %d\n\n", ehdr.e_shnum);
+//
+//       for (int i = 0; i < ehdr.e_shnum; i++) {
+//           printf("Section %2d: %s\n", i, &sh_str[sh_table[i].sh_name]);
+//           printf("  Offset : 0x%lx\n", sh_table[i].sh_offset);
+//           printf("  Taille : 0x%lx\n", sh_table[i].sh_size);
+//           printf("  Type   : %s\n\n", get_section_type_name(sh_table[i].sh_type));
+//       }
+//   }
 
     if (is_disas && text_section) {
         disassemble_text_section(file, text_section, ".text");
