@@ -23,6 +23,37 @@
 #define EI_MAG3     3 
 #define EI_CLASS    4 
 
+#define ELF32_ST_TYPE(i) ((i) & 0xf)
+#define ELF64_ST_TYPE(i) ((i) & 0xf)
+
+
+#define SHT_NULL          0
+#define SHT_PROGBITS      1
+#define SHT_SYMTAB        2
+#define SHT_STRTAB        3
+#define SHT_RELA          4
+#define SHT_HASH          5
+#define SHT_DYNAMIC       6
+#define SHT_NOTE          7
+#define SHT_NOBITS        8
+#define SHT_REL           9
+#define SHT_SHLIB         10
+#define SHT_DYNSYM        11
+#define SHT_INIT_ARRAY    14
+#define SHT_FINI_ARRAY    15
+#define SHT_PREINIT_ARRAY 16
+#define SHT_GROUP         17
+#define SHT_SYMTAB_SHNDX  18
+
+
+#define STT_NOTYPE  0
+#define STT_OBJECT  1
+#define STT_FUNC    2
+#define STT_SECTION 3
+#define STT_FILE    4
+#define STT_COMMON  5
+#define STT_TLS     6
+
 
 typedef struct {
     unsigned char e_ident[EI_NIDENT];
@@ -131,37 +162,5 @@ typedef struct {
     uint64_t p_align;
 } Elf64_Phdr;
 
-
-
-#define ELF32_ST_TYPE(i) ((i) & 0xf)
-#define ELF64_ST_TYPE(i) ((i) & 0xf)
-
-
-#define SHT_NULL          0
-#define SHT_PROGBITS      1
-#define SHT_SYMTAB        2
-#define SHT_STRTAB        3
-#define SHT_RELA          4
-#define SHT_HASH          5
-#define SHT_DYNAMIC       6
-#define SHT_NOTE          7
-#define SHT_NOBITS        8
-#define SHT_REL           9
-#define SHT_SHLIB         10
-#define SHT_DYNSYM        11
-#define SHT_INIT_ARRAY    14
-#define SHT_FINI_ARRAY    15
-#define SHT_PREINIT_ARRAY 16
-#define SHT_GROUP         17
-#define SHT_SYMTAB_SHNDX  18
-
-
-#define STT_NOTYPE  0
-#define STT_OBJECT  1
-#define STT_FUNC    2
-#define STT_SECTION 3
-#define STT_FILE    4
-#define STT_COMMON  5
-#define STT_TLS     6
 
 #endif 
