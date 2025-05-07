@@ -1,6 +1,6 @@
 # Projet C - my_objdump 
 
-L’objectif de ce projet était de re-coder partiellement le binaire `objdump`. Il nous fallait au minimum que notre `objdump` permette d’afficher le magic number de l’ELF, le nombre de sections, leurs noms, et l’affichage pour chaque header de section : le nom de la section, sa taille et leur offset dans le fichier. Pour cela, la bibliothèque `elf.h` nous sera d’une grande aide.
+L’objectif de ce projet était de re-coder partiellement le binaire `objdump`. Il nous fallait au minimum que notre `objdump` permette d’afficher le magic number de l’ELF, le nombre de sections, leurs noms, et d’afficher pour chaque header de section : le nom de la section, sa taille et leur offset dans le fichier. Pour cela, la bibliothèque `elf.h` nous sera d’une grande aide.
 
 ## Magic Byte
 
