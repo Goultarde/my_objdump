@@ -42,12 +42,12 @@ const char *get_section_type_name(uint32_t type) {
 
 const char *get_ph_type(uint32_t type) {
     switch (type) {
-        case 0: return "NULL";
-        case 1: return "LOAD";
-        case 2: return "DYNAMIC";
-        case 3: return "INTERP";
-        case 4: return "NOTE";
-        case 6: return "PHDR";
+        case STT_OBJECT: return "NULL";
+        case STT_FUNC: return "LOAD";
+        case STT_SECTION: return "DYNAMIC";
+        case STT_FILE: return "INTERP";
+        case STT_COMMON: return "NOTE";
+        case STT_TLS: return "PHDR";
         case 0x6474e550: return "GNU_EH_FRAME";
         case 0x6474e551: return "GNU_STACK";
         case 0x6474e552: return "GNU_RELRO";
