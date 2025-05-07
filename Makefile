@@ -1,27 +1,26 @@
-# Nom de l'exécutable
-TARGET = my_objdump
-
-# Fichiers source
-SRC = my_objdump.c
-
-# Fichiers objets
-OBJ = $(SRC:.c=.o)
+# Nom du compilateur
+CC = gcc
 
 # Options de compilation
 CFLAGS = -Wall -Wextra
 
-# Bibliothèques à lier
-LDLIBS = -lcapstone
+# Fichier source
+SRC = my_objdump.c
+
+# Fichier binaire final
+BIN = my_objdump
+
+# Librairies à lier
+LIBS = -lcapstone
 
 # Règle par défaut
-all: $(TARGET)
+all: $(BIN)
 
-$(TARGET): $(OBJ)
-	$(CC) $(CFLAGS) -o $@ $^ $(LDLIBS)
+$(BIN): $(SRC)
+	$(CC) $(CFLAGS) -o $(BIN) $(SRC) $(LIBS)
 
-# Nettoyage
+# Nettoyage des fichiers compilés
 clean:
-	rm -f $(TARGET) $(OBJ)
+	rm -f $(BIN)
 
-# Pour forcer la reconstruction
-re: clean all
+.PHONY: all clean
