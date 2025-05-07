@@ -103,7 +103,7 @@ void print_program_headers32(FILE *file, Elf32_Ehdr *ehdr) {
                ph.p_memsz,
                (ph.p_flags & 4) ? 'R' : ' ',
                (ph.p_flags & 2) ? 'W' : ' ',
-               (ph.p_flags & 1) ? 'E' : ' ',
+               (ph.p_flags & 1) ? 'X' : ' ',
                ph.p_align);
     }
 }
