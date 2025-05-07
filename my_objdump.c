@@ -19,23 +19,23 @@ void print_magic(unsigned char *e_ident) {
 
 const char *get_section_type_name(uint32_t type) {
     switch (type) {
-        case 0: return "NULL";
-        case 1: return "PROGBITS";
-        case 2: return "SYMTAB";
-        case 3: return "STRTAB";
-        case 4: return "RELA";
-        case 5: return "HASH";
-        case 6: return "DYNAMIC";
-        case 7: return "NOTE";
-        case 8: return "NOBITS";
-        case 9: return "REL";
-        case 10: return "SHLIB";
-        case 11: return "DYNSYM";
-        case 14: return "INIT_ARRAY";
-        case 15: return "FINI_ARRAY";
-        case 16: return "PREINIT_ARRAY";
-        case 17: return "GROUP";
-        case 18: return "SYMTAB_SHNDX";
+        case SHT_NULL: return "NULL";
+        case SHT_PROGBITS: return "PROGBITS";
+        case SHT_SYMTAB: return "SYMTAB";
+        case SHT_STRTAB: return "STRTAB";
+        case SHT_RELA: return "RELA";
+        case SHT_HASH: return "HASH";
+        case SHT_DYNAMIC: return "DYNAMIC";
+        case SHT_NOTE: return "NOTE";
+        case SHT_NOBITS: return "NOBITS";
+        case SHT_REL: return "REL";
+        case SHT_SHLIB: return "SHLIB";
+        case SHT_DYNSYM: return "DYNSYM";
+        case SHT_INIT_ARRAY: return "INIT_ARRAY";
+        case SHT_FINI_ARRAY: return "FINI_ARRAY";
+        case SHT_PREINIT_ARRAY: return "PREINIT_ARRAY";
+        case SHT_GROUP: return "GROUP";
+        case SHT_SYMTAB_SHNDX: return "SYMTAB_SHNDX";
         default: return "UNKNOWN";
     }
 }
@@ -174,7 +174,7 @@ ElfSymbol *load_symbols32(FILE *file, Elf32_Shdr *sh_table, int shnum, int *symb
 
             symbols_out = malloc(sizeof(ElfSymbol) * sym_count);
             for (int j = 0; j < sym_count; ++j) {
-                if (symbols_buffer[j].st_size > 0 && symbols_buffer[j].st_value != 0) {  // ignore null symbols
+                if (symbols_buffer[j].st_size > 0 && symbols_buffer[j].st_value != 0) {  
                     symbols_out[*symbol_count_out].addr = symbols_buffer[j].st_value;
                     symbols_out[*symbol_count_out].name = &strtab_data[symbols_buffer[j].st_name];
                     (*symbol_count_out)++;
