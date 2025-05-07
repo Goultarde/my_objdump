@@ -8,7 +8,7 @@ La première chose qu’il fallait faire était d’afficher le magic byte. Il f
 
 `*e_ident*` est un tableau de bytes qui spécifie comment interpréter un fichier elf.
 
-On crée d’abord un `e_indent` temporaire de 16 octets, donc pas celui des structures `Elf32_Ehdr` et `Elf64_Ehdr` de la librairie `elf.h` pour vérifier que le fichier est bien un `elf` valide via une comparaison entre l’indice de `e_ident` et les constantes `ELFMAGX` qui indiquent le `magic number`.
+On crée d’abord un `e_indent` temporaire de 16 octets, donc pas celui des structures `Elf32_Ehdr` et `Elf64_Ehdr` de la librairie `elf.h`. Cela va nous permettre de vérifier que le fichier est bien un `elf` valide via une comparaison entre l’indice de `e_ident` et les constantes `ELFMAGX` qui indiquent le `magic number`.
 
 ```csharp
 unsigned char e_ident[EI_NIDENT];
@@ -42,7 +42,7 @@ Ils sont définis comme suit dans le fichier `elf.h` :
 #define ELFMAG3		'F'		/* Magic number byte 3 */
 ```
 
-Si l’utilisateur choisit d’afficher le `magic number`, via une boucle sur `e_ident`, on va afficher chaque octet du `magic number` en hexadécimal mais sur deux chiffres avec `%02x` suivi d’un espace pour séparer les groupes de deux. Puis on en profite pour afficher la conversion de MAGX avec le format de string `%c` qui convertit l’hexadécimal en caractère (ELF).
+Si l’utilisateur choisit d’afficher le `magic number`, via une boucle sur `e_ident`, on va afficher chaque octet du `magic number` en hexadécimal mais sur deux chiffres avec `%02x` suivi d’un espace pour séparer par groupes de deux. Puis on en profite pour afficher la conversion de MAGX avec le format de string `%c` qui convertit l’hexadécimal en caractère (ELF).
 
 ```csharp
 void print_magic(unsigned char *e_ident) {
